@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/ashahide/d1c3/internal/logtools"
 	"github.com/ashahide/d1c3/internal/roll"
@@ -18,8 +19,13 @@ func parseInputs() (CLIArgs, error) {
 		logtools.Logger.Println("Missing dice roll argument - args length: ", len(os.Args))
 		return CLIArgs{}, fmt.Errorf("missing dice roll argument (example: 2d6)")
 	}
-	logtools.Logger.Println("Dice roll argument: ", os.Args[1])
-	return CLIArgs{DiceRolls: os.Args[1]}, nil
+	logtools.Logger.Println("Dice roll arguments: ", os.Args)
+
+	// Join all args
+	joined_strings := strings.Join(os.Args[1:], " ")
+	logtools.Logger.Println("Joined Args string")
+
+	return CLIArgs{DiceRolls: joined_strings}, nil
 }
 
 func main() {
