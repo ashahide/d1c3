@@ -3,50 +3,57 @@ package roll
 import (
 	"fmt"
 	"math/rand"
-	"strings"
+
+	"github.com/ashahide/d1c3/internal/logtools"
 )
 
-func RollDice(dice string) (dice_rolls map[string]int, total int, error error) {
+func RollDice(dice []DiceOp) ([]DiceOp, error) {
+	logtools.Logger.Println("[RollDice] Rolling dice...")
+	logtools.Logger.Println("[RollDice] Dice to roll:", dice)
+	logtools.Logger.Println("[RollDice] Number of dice to roll:", len(dice))
 
-	input_dice := strings.Fields(dice)
+	for i := range dice {
+		d := &dice[i] // <---- grab pointer to real DiceOp
 
-	// Initialize the dice_rolls map
-	dice_rolls = make(map[string]int)
+		logtools.Logger.Println("[RollDice] Rolling dice:", d.Value)
 
-	// Initialize the total
-	if len(input_dice) == 0 {
-		return dice_rolls, total, fmt.Errorf("no dice rolls provided")
-	}
-
-	for _, d := range input_dice {
-		dice_number, dice_type, err := ParseDice(d)
-		if err != nil {
-			return dice_rolls, total, fmt.Errorf("error parsing dice: %s", err)
-
-		} else {
-
-			// Roll dice
-			total_roll := 0
-			for range dice_number {
-				// Roll the dice
-				total_roll += rand.Intn(dice_type) + 1
-
-				dice_rolls[d] = total_roll
-
-			}
-
+		dice_number, dice_type, parseErr := ParseDice(d.Value)
+		if parseErr != nil {
+			return nil, fmt.Errorf("error parsing dice: %w", parseErr)
 		}
 
+		total_roll := 0
+		logtools.Logger.Printf("[RollDice] Rolling %d d%d", dice_number, dice_type)
+
+		for j := 0; j < dice_number; j++ {
+			logtools.Logger.Printf("[RollDice] Rolling dice number: %d", j+1)
+
+			roll := rand.Intn(dice_type) + 1
+			logtools.Logger.Printf("[RollDice] Rolled: %d", roll)
+
+			total_roll += roll
+			logtools.Logger.Printf("[RollDice] Current total: %d", total_roll)
+
+			d.Rolls = append(d.Rolls, roll) // Now modifies real d
+		}
+
+		d.Total = total_roll // Correctly saved into slice
+		logtools.Logger.Printf("[RollDice] Final total for %s: %d", d.Value, d.Total)
 	}
 
-	// Calculate the total
-	for _, roll := range dice_rolls {
-		total += roll
-	}
-	// Check if the total is valid
-	if total <= 0 {
-		return dice_rolls, total, fmt.Errorf("invalid total: %d", total)
-	}
+	return dice, nil
+}
 
-	return dice_rolls, total, error
+func GetTotal(dice []DiceOp) (total int) {
+	logtools.Logger.Println("[GetTotal] Calculating total...")
+	for _, d := range dice {
+		logtools.Logger.Printf("[GetTotal] Adding %s: %d", d.Value, d.Total)
+		if d.Op == "+" {
+			total += d.Total
+		} else if d.Op == "-" {
+			total -= d.Total
+		}
+	}
+	logtools.Logger.Printf("[GetTotal] Total: %d", total)
+	return total
 }
