@@ -12,7 +12,7 @@ import (
 // It parses each dice expression, rolls the specified number and type of dice,
 // stores each individual roll, and computes the subtotal for each DiceOp.
 // Returns the updated list of DiceOp objects with Rolls and Total fields populated, or an error if parsing fails.
-func RollDice(dice []DiceOp) ([]DiceOp, error) {
+func RollDice(dice []DiceOp, advantage bool, disadvantage bool) ([]DiceOp, error) {
 	logtools.Logger.Println("[RollDice] Starting dice rolling process...")
 	logtools.Logger.Println("[RollDice] Dice to roll:", dice)
 	logtools.Logger.Println("[RollDice] Number of dice operations to process:", len(dice))
@@ -37,6 +37,24 @@ func RollDice(dice []DiceOp) ([]DiceOp, error) {
 
 			roll := rand.Intn(dice_type) + 1 // Random roll between 1 and dice_type
 			logtools.Logger.Printf("[RollDice] Rolled value: %d", roll)
+
+			if advantage || disadvantage {
+				logtools.Logger.Printf("[RollDice] Rolling second dice roll")
+				roll2 := rand.Intn(dice_type) + 1 // Random roll between 1 and dice_type
+				logtools.Logger.Printf("[RollDice] Rolled second value: %d", roll2)
+
+				og_roll := roll
+
+				if advantage {
+
+					roll = max(roll, roll2)
+					logtools.Logger.Printf("[RollDice] Advantage so choosing max(%d, %d) = %d", og_roll, roll2, roll)
+
+				} else if disadvantage {
+					roll = min(roll, roll2)
+					logtools.Logger.Printf("[RollDice] Disadvantage so choosing min(%d, %d) = %d", og_roll, roll2, roll)
+				}
+			}
 
 			total_roll += roll
 			logtools.Logger.Printf("[RollDice] Current subtotal after roll %d: %d", j+1, total_roll)
