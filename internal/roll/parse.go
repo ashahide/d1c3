@@ -10,18 +10,6 @@ import (
 	"github.com/ashahide/d1c3/internal/logtools"
 )
 
-// isValidDieType checks if a given die type is allowed.
-// Valid die types include 1, 4, 6, 8, 10, 12, and 20.
-func isValidDieType(d int) bool {
-	valid := []int{1, 4, 6, 8, 10, 12, 20}
-	for _, v := range valid {
-		if d == v {
-			return true
-		}
-	}
-	return false
-}
-
 // ParseDice parses a dice string such as "2d6" into its number of dice and die type.
 // Returns the number of dice, type of dice, and an error if the format is invalid.
 func ParseDice(dice string) (dice_number int, dice_type int, error error) {
@@ -54,12 +42,6 @@ func ParseDice(dice string) (dice_number int, dice_type int, error error) {
 	if dice_number < 1 {
 		logtools.Logger.Println("[ParseDice] Invalid number of dice:", dice_number)
 		return dice_number, dice_type, fmt.Errorf("invalid number of dice: %d", dice_number)
-	}
-
-	// Validate die type
-	if !isValidDieType(dice_type) {
-		logtools.Logger.Println("[ParseDice] Invalid die type:", dice_type)
-		return dice_number, dice_type, fmt.Errorf("invalid type of dice: %d", dice_type)
 	}
 
 	logtools.Logger.Printf("[ParseDice] Successfully parsed: %d dice of d%d", dice_number, dice_type)
