@@ -53,7 +53,7 @@ func parseInputs() (CLIArgs, error) {
 	logtools.Logger.Println("Disadvantage flag:", *disadvantage)
 
 	if len(argsBeforeFlags) == 0 {
-		return CLIArgs{}, fmt.Errorf("missing dice roll argument (example: 2d6)")
+		return CLIArgs{}, nil
 	}
 
 	joinedStrings := strings.Join(argsBeforeFlags, " ")
@@ -81,6 +81,11 @@ func main() {
 	args, err := parseInputs()
 	if err != nil {
 		panic(err)
+	}
+
+	if (args == CLIArgs{}) {
+		logtools.Logger.Println("Empty arguments - returning")
+		return
 	}
 
 	// Break the input into individual rolls
