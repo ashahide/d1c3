@@ -1,14 +1,15 @@
 # d1c3
 
-`d1c3` is a lightweight command-line tool written in Go for rolling dice, with support for *advantage* and *disadvantage* mechanics (such as in tabletop RPGs like Dungeons & Dragons).
+`d1c3` is a lightweight command-line tool written in Go for rolling dice, with support for *advantage*, *disadvantage*, and optional *verbose output* designed for tabletop gaming.
 
 ---
 
 ## Features
 
 - Roll custom dice expressions like `2d6+1d8-3`
-- Support for advantage (`--advantage`) and disadvantage (`--disadvantage`)
-- Input parsing with detailed logging
+- Supports **advantage** and **disadvantage**
+- Verbose mode explains individual dice rolls
+- Gracefully handles combined expressions like `2d6+3d4-1`
 
 ---
 
@@ -18,7 +19,7 @@
 go install github.com/ashahide/d1c3@latest
 ```
 
-Ensure that your `$GOPATH/bin` directory is in your system's `PATH`.
+Ensure that your `$GOPATH/bin` is in your `PATH`.
 
 ---
 
@@ -30,18 +31,15 @@ d1c3 [dice_expression] [flags]
 
 ### Dice Expression Format
 
-The dice expression must be passed as a **single string**, either:
+The expression must be passed as a **single string**, either:
 - Without spaces:  
   ```bash
   d1c3 2d4+1d6-3
   ```
-- Or quoted to preserve spaces:
+- Or quoted if including spaces:
   ```bash
   d1c3 '2d4 + 1d6 - 3'
   ```
-
-Unquoted expressions with spaces will not be parsed correctly unless there are no whitespaces
-like 2d4-6.
 
 ---
 
@@ -49,55 +47,53 @@ like 2d4-6.
 
 | Flag             | Description                                           |
 |------------------|-------------------------------------------------------|
-| `--advantage`    | Roll two dice for each roll and keep the higher value |
-| `--disadvantage` | Roll two dice for each roll and keep the lower value  |
+| `--advantage`    | Roll two dice and keep the higher result              |
+| `--disadvantage` | Roll two dice and keep the lower result               |
+| `--verbose`      | Print full breakdown of each roll and subtotal        |
 
-If both `--advantage` and `--disadvantage` are provided, neither will be applied.
+> If both `--advantage` and `--disadvantage` are set, both will be ignored.
 
 ---
 
 ## Examples
 
+### Basic roll
+
 ```bash
-d1c3 1d20
-d1c3 3d6+2
-d1c3 '2d10 + 1d4' --advantage
-d1c3 '1d20 + 5' --disadvantage
+$ d1c3 1d5
+2
+```
+
+### Verbose output
+
+```bash
+$ d1c3 1d5 -verbose
+Dice Rolls:
+  Added      1d5 -> [2] -> subtotal: 2
+Total: 2
+```
+
+### Multi-term roll with subtraction
+
+```bash
+$ d1c3 2d6+3d5-7 -verbose
+Dice Rolls:
+  Added      2d6 -> [1 6] -> subtotal: 7
+  Added      3d5 -> [5 1 5] -> subtotal: 11
+  Subtracted 7d1 -> [1 1 1 1 1 1 1] -> subtotal: 7
+Total: 11
 ```
 
 ---
 
-## Example Output
+## Output Behavior
 
-```bash
-$ go run cmd/main.go '2d6 + 2d3 - 7' --disadvantage
-Dice Rolls (with disadvantage):  [{+ 2d6 [4 2] 6} {+ 2d3 [1 1] 2} {- 7d1 [1 1 1 1 1 1 1] 7}]
-Total:  1
-
-$ go run cmd/main.go '2d6 + 2d3 - 7'
-Dice Rolls:  [{+ 2d6 [1 2] 3} {+ 2d3 [3 3] 6} {- 7d1 [1 1 1 1 1 1 1] 7}]
-Total:  2
-
-$ go run cmd/main.go '2d6 + 2d3'
-Dice Rolls:  [{+ 2d6 [2 4] 6} {+ 2d3 [2 1] 3}]
-Total:  9
-
-$ go run cmd/main.go "2d4"
-Dice Rolls:  [{+ 2d4 [1 3] 4}]
-Total:  4
-
-$ go run cmd/main.go "2d4-6"
-Dice Rolls:  [{+ 2d4 [3 4] 7} {- 6d1 [1 1 1 1 1 1] 6}]
-Total:  1
-
-$ go run cmd/main.go "2d4" --advantage
-Dice Rolls (with advantage):  [{+ 2d4 [4 3] 7}]
-Total:  7
-
-$ go run cmd/main.go "2d4" --disadvantage
-Dice Rolls (with disadvantage):  [{+ 2d4 [4 1] 5}]
-Total:  5
-```
+- If `--verbose` is **not used**, only the final total is printed.
+- If `--verbose` is used, each step of the roll is printed in a readable format showing:
+  - the operation (`added` / `subtracted`)
+  - the dice expression
+  - individual roll results
+  - subtotal per roll group
 
 ---
 
@@ -106,18 +102,6 @@ Total:  5
 - `main.go` – CLI argument parsing and execution
 - `internal/roll` – Dice parsing and rolling logic
 - `internal/logtools` – Logger initialization and debug output
-
----
-
-## Logging
-
-Logs include detailed information about:
-- Argument parsing
-- Flag interpretation
-- Roll breakdowns
-- Final totals
-
-This helps with debugging or inspecting how the dice rolls were computed.
 
 ---
 

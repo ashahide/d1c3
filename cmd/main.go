@@ -14,6 +14,14 @@ type CLIArgs struct {
 	DiceRolls    string
 	Advantage    bool
 	Disadvantage bool
+	Verbose      bool
+}
+
+func titleCase(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 func parseInputs() (CLIArgs, error) {
@@ -43,6 +51,7 @@ func parseInputs() (CLIArgs, error) {
 	fs := flag.NewFlagSet("diceRoller", flag.ContinueOnError)
 	advantage := fs.Bool("advantage", false, "Roll with advantage")
 	disadvantage := fs.Bool("disadvantage", false, "Roll with disadvantage")
+	verbose := fs.Bool("verbose", false, "Verbose output")
 
 	if err := fs.Parse(argsFlags); err != nil {
 		logtools.Logger.Println("Failed parsing flags:", err)
@@ -68,6 +77,7 @@ func parseInputs() (CLIArgs, error) {
 		DiceRolls:    joinedStrings,
 		Advantage:    *advantage,
 		Disadvantage: *disadvantage,
+		Verbose:      *verbose,
 	}, nil
 }
 
@@ -103,20 +113,46 @@ func main() {
 		panic(err)
 	}
 
-	if args.Advantage {
-		fmt.Println("Dice Rolls (with advantage): ", dice_ops)
+	if args.Verbose {
 
-	} else if args.Disadvantage {
-		fmt.Println("Dice Rolls (with disadvantage): ", dice_ops)
+		// Determine roll context
+		var label string
+		switch {
+		case args.Advantage:
+			label = "Dice Rolls (with advantage)"
+		case args.Disadvantage:
+			label = "Dice Rolls (with disadvantage)"
+		default:
+			label = "Dice Rolls"
+		}
+
+		fmt.Println(label + ":")
+
+		for _, op := range dice_ops {
+			verb := "added     "
+			if op.Op == "-" {
+				verb = "subtracted"
+			}
+
+			fmt.Printf("  %s %s -> %v -> subtotal: %d\n",
+				titleCase(verb),
+				op.Value,
+				op.Rolls,
+				op.Total,
+			)
+		}
+
+		// Get the total
+		total := roll.GetTotal(dice_ops)
+		fmt.Println("Total:", total)
+
+		logtools.Logger.Println("Total: ", total)
 
 	} else {
-		fmt.Println("Dice Rolls: ", dice_ops)
+		total := roll.GetTotal(dice_ops)
+		fmt.Println(total)
 	}
 
-	// Get the total
-	total := roll.GetTotal(dice_ops)
-	fmt.Println("Total: ", total)
-	logtools.Logger.Println("Total: ", total)
 	logtools.Logger.Println("Exiting program")
 
 }
